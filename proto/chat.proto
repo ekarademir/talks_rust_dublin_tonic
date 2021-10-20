@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package chat;
+
+service Chat {
+    rpc Join(Member) returns (JoinResult) {}
+    rpc ChatLog(After) returns (stream ChatMessage) {}
+    rpc Commit(NewChatMessage) returns (CommitResult) {}
+}
+
+message Member {
+    string username = 1;
+    string password = 2;
+}
+
+message JoinResult {
+    uint64 token = 1;
+    JoinResponse response = 2;
+}
+
+enum JoinResponse {
+    DENIED = 0;
+    ACCEPTED = 1;
+}
+
+message CommitResult {
+    uint64 time = 1;
+    CommitResponse response = 2;
+}
+
+enum CommitResponse {
+    ERROR = 0;
+    TOO_LONG = 1;
+    COMMITTED = 2;
+}
+
+message After {
+    uint64 value = 1;
+    uint64 token = 2;
+}
+
+message ChatMessage {
+    uint64 time = 1;
+    string username = 2;
+    string value = 3;
+}
+
+message NewChatMessage {
+    string value = 1;
+    uint64 token = 2;
+}
