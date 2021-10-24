@@ -11,6 +11,7 @@ use chat::{
     Member,
     JoinResponse,
     NewChatMessage,
+    After
 };
 
 pub mod chat {
@@ -47,7 +48,7 @@ async fn main() {
                 .help("Join a server to obtain token")
             )
             .subcommand(SubCommand::with_name("send")
-                .about("send a message to the server")
+                .about("Send a message to the server")
                 .arg(Arg::with_name("server")
                     .short("s")
                     .long("server")
@@ -66,6 +67,30 @@ async fn main() {
                     .long("message")
                     .value_name("MESSAGE")
                     .required(true)
+                )
+                .help("Send a message to the server")
+            )
+            .subcommand(SubCommand::with_name("messages")
+                .about("Get messages from specified time onwards")
+                .arg(Arg::with_name("server")
+                    .short("s")
+                    .long("server")
+                    .value_name("SERVER")
+                    .default_value(DEFAULT_SERVER)
+                    .required(false)
+                )
+                .arg(Arg::with_name("token")
+                    .short("t")
+                    .long("token")
+                    .value_name("TOKEN")
+                    .required(true)
+                )
+                .arg(Arg::with_name("after")
+                    .short("a")
+                    .long("after")
+                    .value_name("AFTER")
+                    .required(false)
+                    .default_value("0")
                 )
                 .help("Send a message to the server")
             )
@@ -109,6 +134,31 @@ async fn main() {
                 value: message
             })).await {
                 Ok(commit_result) => println!("Last message time {:?}", commit_result.get_ref().time),
+                Err(e) => println!("Can't send message {:?}", e)
+            }
+        } else {
+            println!("Can't connect");
+        };
+    }
+
+    if let Some(matches) = matches.subcommand_matches("messages") {
+        let server_addr = matches.value_of("server").unwrap().to_string();
+        let token = matches.value_of("token").unwrap().parse().unwrap();
+        let after = matches.value_of("after").unwrap().parse().unwrap();
+        println!("Connecting {}", server_addr);
+        if let Ok(mut client) = ChatClient::connect(server_addr).await {
+            println!("Getting messages");
+            match client.chat_log(Request::new(After {
+                token,
+                value: after
+            })).await {
+                Ok(response) => {
+                    let mut msg_stream = response.into_inner();
+                    while let Some(msg) = msg_stream.message().await.unwrap() {
+                        println!("{:?}: {:?}", msg.username, msg.value);
+                    }
+                    println!("End of messages");
+                },
                 Err(e) => println!("Can't send message {:?}", e)
             }
         } else {
