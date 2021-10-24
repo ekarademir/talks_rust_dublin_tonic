@@ -25,13 +25,6 @@ enum JoinResponse {
 
 message CommitResult {
     uint64 time = 1;
-    CommitResponse response = 2;
-}
-
-enum CommitResponse {
-    ERROR = 0;
-    TOO_LONG = 1;
-    COMMITTED = 2;
 }
 
 message After {
