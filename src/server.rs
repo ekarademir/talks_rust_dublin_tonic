@@ -12,7 +12,7 @@ use tokio_stream::wrappers::ReceiverStream;
 use tokio::signal;
 use tokio::sync::mpsc;
 use tokio::sync::RwLock;
-use log::{info, debug};
+use log::info;
 
 use chat::{
     chat_server::{Chat, ChatServer},
@@ -30,6 +30,7 @@ pub mod chat {
 }
 
 const MAX_MSG_LEN:usize = 50;
+const DEFAULT_SERVER:&str = "[::1]:10000";
 
 #[derive(Debug, Default)]
 pub struct ChatService {
@@ -86,15 +87,15 @@ impl Chat for ChatService {
     async fn join(&self, request: Request<Member>) -> Result<Response<JoinResult>, Status> {
         let member = request.get_ref();
         let result;
-        debug!("Joining {:?}", member.username);
+        info!("Joining {:?}", member.username);
         if self.has_member(member).await {
-            debug!("Denied");
+            info!("Denied");
             result = JoinResult {
                 token: 0,
                 response: JoinResponse::Denied as i32
             };
         } else {
-            debug!("Accepted");
+            info!("Accepted");
             let token = self.add_user(member.to_owned()).await;
             result = JoinResult {
                 token,
@@ -175,7 +176,8 @@ async fn main() -> anyhow::Result<()>{
     }).await;
 
 
-    let addr = "[::1]:10000".parse()?;
+    info!("Parsing {:?}", DEFAULT_SERVER);
+    let addr = DEFAULT_SERVER.parse()?;
     let service = ChatServer::new(chat_service);
 
     info!("Listening at {:?}", addr);
