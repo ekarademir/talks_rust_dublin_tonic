@@ -15,14 +15,18 @@ const packageDefinition = protoLoader.loadSync(
     });
 
 const chatModule = grpc.loadPackageDefinition(packageDefinition).chat;
-const client = new chatModule.Chat('localhost:10000', grpc.credentials.createInsecure());
 
 const joinResponse = {
     Denied: chatModule.JoinResponse.type.value[0].name,
     Accepted: chatModule.JoinResponse.type.value[1].name,
 }
 
-function join(member) {
+function join({ server, username, password }) {
+    const member = {
+        username,
+        password,
+    };
+    const client = new chatModule.Chat(server, grpc.credentials.createInsecure());
     return new Promise((res, rej) => {
         client.join(member, (err, result) => {
             if (err) rej(err);
@@ -32,7 +36,12 @@ function join(member) {
     });
 }
 
-function send(newChatMessage) {
+function send({ server, message, token }) {
+    const newChatMessage = {
+        value: message,
+        token
+    };
+    const client = new chatModule.Chat(server, grpc.credentials.createInsecure());
     return new Promise((res, rej) => {
         client.commit(newChatMessage, (err, result) => {
             if (err) rej(err);
@@ -41,9 +50,14 @@ function send(newChatMessage) {
     });
 }
 
-function messages(after) {
+function messages({ server, after, token }) {
+    const afterObj = {
+        value: after,
+        token
+    }
+    const client = new chatModule.Chat(server, grpc.credentials.createInsecure());
     return new Promise((res, rej) => {
-        const messageStream = client.chatLog(after);
+        const messageStream = client.chatLog(afterObj);
         const messages = []
         messageStream.on('data', (message) => {
             messages.push(message);
