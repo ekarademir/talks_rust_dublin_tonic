@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use tonic::codegen::http::request;
 use tonic::{
     transport::Server,
     Request,
@@ -12,7 +11,7 @@ use tokio_stream::wrappers::ReceiverStream;
 use tokio::signal;
 use tokio::sync::mpsc;
 use tokio::sync::RwLock;
-use log::info;
+use log::{debug, info};
 
 use chat::{
     chat_server::{Chat, ChatServer},
@@ -87,15 +86,15 @@ impl Chat for ChatService {
     async fn join(&self, request: Request<Member>) -> Result<Response<JoinResult>, Status> {
         let member = request.get_ref();
         let result;
-        info!("Joining {:?}", member.username);
+        debug!("Joining {:?}", member.username);
         if self.has_member(member).await {
-            info!("Denied");
+            debug!("Denied");
             result = JoinResult {
                 token: 0,
                 response: JoinResponse::Denied as i32
             };
         } else {
-            info!("Accepted");
+            debug!("Accepted");
             let token = self.add_user(member.to_owned()).await;
             result = JoinResult {
                 token,
@@ -113,7 +112,7 @@ impl Chat for ChatService {
             let history = self.history.clone();
             let after = request.get_ref().value;
             tokio::spawn(async move {
-                info!("Sending messages that are after {:?} for user {:?}", after, username);
+                debug!("Sending messages that are after {:?} for user {:?}", after, username);
                 for msg in history.read().await.iter() {
                     tx.send(Ok(msg.clone())).await.unwrap();
                 }
