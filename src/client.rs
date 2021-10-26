@@ -108,11 +108,11 @@ async fn main() {
                 password
             })).await {
                 Ok(join_result) => {
-                    if join_result.get_ref().response == JoinResponse::Accepted as i32 {
-                        println!("Token: {}", join_result.get_ref().token);
-                    }
-                    if join_result.get_ref().response == JoinResponse::Denied as i32 {
-                        println!("Access denied");
+                    let join_response = join_result.get_ref().response;
+                    match JoinResponse::from_i32(join_response) {
+                        Some(JoinResponse::Accepted) => println!("Token: {}", join_result.get_ref().token),
+                        Some(JoinResponse::Denied) => println!("Access denied"),
+                        None => println!("Can't understand the response formt he server")
                     }
                 },
                 Err(e) => println!("Can't obtain token {:?}", e)
